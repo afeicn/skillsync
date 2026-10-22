@@ -8,10 +8,11 @@ import (
 type Repo struct{ Dir string }
 
 func (r Repo) Run(args ...string) (string, error) {
-	cmd := exec.Command("git", args...)
+	full := append([]string{"-c", "core.quotePath=false"}, args...)
+	cmd := exec.Command("git", full...)
 	cmd.Dir = r.Dir
 	out, err := cmd.CombinedOutput()
-	s := strings.TrimSpace(string(out))
+	s := strings.TrimRight(string(out), "\r\n")
 	if err != nil {
 		return s, &GitError{Args: args, Out: s, Err: err}
 	}

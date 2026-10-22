@@ -132,6 +132,7 @@ func Collect(cfg *config.Config) (*Report, error) {
 	}
 
 	uncommitted := map[string]map[string]bool{}
+	dirUntracked := map[string]bool{}
 	for _, line := range strings.Split(g.Porcelain(), "\n") {
 		if len(line) < 4 {
 			continue
@@ -148,6 +149,9 @@ func Collect(cfg *config.Config) (*Report, error) {
 			uncommitted[topName(p)] = map[string]bool{}
 		}
 		uncommitted[topName(p)][tag] = true
+		if xy == "??" && (p == topName(p)+"/" || p == topName(p)) {
+			dirUntracked[topName(p)] = true
+		}
 	}
 	for s, tags := range uncommitted {
 		if localDiff[s] == nil {
@@ -202,8 +206,8 @@ func Collect(cfg *config.Config) (*Report, error) {
 		rep.Rows = append(rep.Rows, Row{Skill: s, Kind: kind, Local: keys(l), Remote: keys(r)})
 	}
 
-	for s, tags := range uncommitted {
-		if tags["UNT"] && remoteNames[s] {
+	for s := range dirUntracked {
+		if remoteNames[s] {
 			rep.NameClash = append(rep.NameClash, s)
 		}
 	}
