@@ -65,4 +65,17 @@ let app = NSApplication.shared
 let delegate = AppDelegate()
 app.delegate = delegate
 app.setActivationPolicy(.regular)
+
+let mainMenu = NSMenu()
+let appItem = NSMenuItem()
+mainMenu.addItem(appItem)
+let appMenu = NSMenu()
+appMenu.addItem(withTitle: "关于 skillsync", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+appMenu.addItem(.separator())
+appMenu.addItem(withTitle: "隐藏 skillsync", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+appMenu.addItem(.separator())
+appMenu.addItem(withTitle: "退出 skillsync", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+appItem.submenu = appMenu
+app.mainMenu = mainMenu
+
 app.run()
