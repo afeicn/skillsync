@@ -3,6 +3,7 @@ package recon
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -475,6 +476,27 @@ func preSyncCheck(cfg *config.Config) (string, bool) {
 
 // Auto: snapshot local, reconcile, merge safe changes, push. Returns exit code.
 func Auto(cfg *config.Config) int {
+	code := autoInner(cfg)
+	if b, err := json.Marshal(map[string]any{
+		"time": time.Now().Format(time.RFC3339), "code": code,
+	}); err == nil {
+		_ = os.WriteFile(filepath.Join(config.StateDir(), "last-sync.json"), b, 0o644)
+	}
+	return code
+}
+
+// LastSync returns the persisted result of the most recent Auto run.
+func LastSync() map[string]any {
+	b, err := os.ReadFile(filepath.Join(config.StateDir(), "last-sync.json"))
+	if err != nil {
+		return nil
+	}
+	var m map[string]any
+	_ = json.Unmarshal(b, &m)
+	return m
+}
+
+func autoInner(cfg *config.Config) int {
 	g := gitx.Repo{Dir: cfg.SkillsDir}
 	lock := filepath.Join(os.TempDir(), "skillsync.lock")
 	if err := os.Mkdir(lock, 0o755); err != nil {

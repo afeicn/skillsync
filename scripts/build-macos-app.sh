@@ -11,8 +11,15 @@ go build -ldflags "-s -w -X main.version=${VERSION:-dev}" -o "$APP/Contents/Reso
 swiftc -O app/macos/main.swift -o "$APP/Contents/MacOS/skillsync-app" \
   -framework Cocoa -framework WebKit
 
-if [ -f cmd/skillsync-tray/icon.png ]; then
-  sips -s format icns cmd/skillsync-tray/icon.png --out "$APP/Contents/Resources/App.icns" >/dev/null || true
+if [ ! -f app/macos/AppIcon.png ]; then python3 scripts/make-icon.py; fi
+if [ -f app/macos/AppIcon.png ]; then
+  ICONSET=$(mktemp -d)/AppIcon.iconset; mkdir -p "$ICONSET"
+  for sz in 16 32 64 128 256 512; do
+    sips -z $sz $sz app/macos/AppIcon.png --out "$ICONSET/icon_${sz}x${sz}.png" >/dev/null
+    dbl=$((sz*2))
+    sips -z $dbl $dbl app/macos/AppIcon.png --out "$ICONSET/icon_${sz}x${sz}@2x.png" >/dev/null
+  done
+  iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/App.icns"
 fi
 
 cat > "$APP/Contents/Info.plist" <<'EOF'

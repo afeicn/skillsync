@@ -5,14 +5,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var window: NSWindow!
     var webview: WKWebView!
     var proc: Process?
-    let port = "7788"
 
     func applicationDidFinishLaunching(_ note: Notification) {
         let bin = Bundle.main.resourcePath! + "/skillsync"
         let p = Process()
         p.executableURL = URL(fileURLWithPath: bin)
-        p.arguments = ["ui", "--port", port, "--no-browser"]
-        try? p.run()
+        p.arguments = ["ui", "--port", "0", "--no-browser"]
+        let pipe = Pipe()
+        p.standardOutput = pipe
+        p.standardError = FileHandle.nullDevice
+        do { try p.run() } catch { fail("无法启动同步服务") ; return }
         proc = p
 
         window = NSWindow(
@@ -23,23 +25,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         webview = WKWebView(frame: window.contentView!.bounds)
         webview.autoresizingMask = [.width, .height]
         window.contentView!.addSubview(webview)
-        pollAndLoad()
         window.center()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+
+        DispatchQueue.global().async {
+            let h = pipe.fileHandleForReading
+            var buf = Data()
+            while true {
+                let d = h.availableData
+                if d.isEmpty { break }
+                buf.append(d)
+                if let s = String(data: buf, encoding: .utf8),
+                   let r = s.range(of: "LISTENING ") {
+                    let rest = s[r.upperBound...].components(separatedBy: .whitespacesAndNewlines)[0]
+                    if let port = Int(rest) {
+                        DispatchQueue.main.async {
+                            self.webview.load(URLRequest(url: URL(string: "http://127.0.0.1:\(port)/")!))
+                        }
+                        return
+                    }
+                }
+            }
+            DispatchQueue.main.async { self.fail("同步服务未能启动") }
+        }
     }
 
-    func pollAndLoad() {
-        let base = "http://127.0.0.1:\(port)"
-        URLSession.shared.dataTask(with: URL(string: base + "/api/status")!) { _, resp, err in
-            if err == nil, (resp as? HTTPURLResponse)?.statusCode == 200 {
-                DispatchQueue.main.async {
-                    self.webview.load(URLRequest(url: URL(string: base + "/")!))
-                }
-            } else {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { self.pollAndLoad() }
-            }
-        }.resume()
+    func fail(_ msg: String) {
+        let a = NSAlert(); a.messageText = "skillsync"; a.informativeText = msg
+        a.runModal()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ app: NSApplication) -> Bool { true }

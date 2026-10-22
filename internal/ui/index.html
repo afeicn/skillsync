@@ -16,9 +16,9 @@
   --radius:18px;
 }
 :root[data-theme=light] {
-  --bg:#F7F9FC; --fg:#1A1F36; --side:#FFFFFF; --line:#E7EAf2;
+  --bg:#F7F9FC; --fg:#1A1F36; --side:#FFFFFF; --line:#E7EAF2;
   --panel:#FFFFFF; --muted:#8792A2; --sub:#5E6C84;
-  --accent1:#635BFF; --accent2:#635BFF; --grad:linear-gradient(135deg,#635BFF,#635BFF);
+  --accent1:#635BFF; --grad:linear-gradient(135deg,#635BFF,#635BFF);
   --ok:#12784A; --okbg:#E3F9EE; --warn:#9A6700; --warnbg:#FDF3E1;
   --new:#3A32C9; --newbg:#EEF0FF; --bad:#D64545; --badbg:#FDF0F0;
   --appbg:var(--bg); --radius:12px;
@@ -28,15 +28,18 @@ body { font-family:-apple-system,'PingFang SC','Inter',sans-serif; background:va
 .side { display:flex; flex-direction:column; padding:20px 14px; background:var(--side); border-right:1px solid var(--line); }
 .logo { display:flex; align-items:center; gap:10px; font-weight:700; font-size:16px; padding:6px 10px 22px; }
 .logo .dot { width:26px; height:26px; border-radius:8px; background:var(--grad); display:inline-flex; align-items:center; justify-content:center; color:#fff; font-size:13px; }
-.nav a { display:flex; gap:10px; align-items:center; padding:9px 12px; border-radius:8px; font-size:13.5px; text-decoration:none; color:var(--sub); margin-bottom:2px; }
+.nav a { display:flex; gap:10px; align-items:center; padding:9px 12px; border-radius:8px; font-size:13.5px; text-decoration:none; color:var(--sub); margin-bottom:2px; cursor:pointer; }
 .nav a.on { background:var(--newbg); color:var(--new); font-weight:600; }
+.nav a .cnt { margin-left:auto; background:var(--bad); color:#fff; border-radius:99px; font-size:11px; padding:1px 7px; }
 .foot { margin-top:auto; font-size:12px; padding:10px; border-radius:8px; background:var(--panel); color:var(--muted); border:1px solid var(--line); line-height:1.7; }
 .main { padding:26px 34px; overflow:hidden; }
 .top { display:flex; align-items:center; gap:14px; margin-bottom:22px; }
 .top h1 { font-size:20px; font-weight:700; }
 .btn { padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; border:none; background:var(--grad); color:#fff; cursor:pointer; }
+.btn:disabled { opacity:.6; cursor:default; }
 .btn.ghost { background:var(--panel); color:var(--fg); border:1px solid var(--line); }
-.theme { width:34px; height:34px; border-radius:8px; background:var(--panel); border:1px solid var(--line); cursor:pointer; font-size:15px; }
+.btn.warn { background:var(--bad); }
+.theme { width:34px; height:34px; border-radius:8px; background:var(--panel); border:1px solid var(--line); cursor:pointer; font-size:15px; color:var(--fg); }
 .last { font-size:12.5px; margin-left:auto; color:var(--muted); }
 .banner { padding:13px 18px; border-radius:10px; font-size:13px; margin-bottom:18px; display:flex; gap:10px; align-items:center; }
 .banner.ok { background:var(--okbg); border:1px solid var(--ok); color:var(--ok); }
@@ -44,21 +47,33 @@ body { font-family:-apple-system,'PingFang SC','Inter',sans-serif; background:va
 .cards { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:18px; }
 .card { padding:16px 18px; border-radius:var(--radius); background:var(--panel); border:1px solid var(--line); }
 .card .k { font-size:12px; color:var(--muted); margin-bottom:6px; }
-.card .v { font-size:28px; font-weight:700; }
-:root[data-theme=dark] .card .v { background:linear-gradient(135deg,#C4B5FD,#67E8F9); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.card .v { font-size:26px; font-weight:700; }
+:root[data-theme=dark] .card .v.hl { background:linear-gradient(135deg,#C4B5FD,#67E8F9); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
 .card .s { font-size:11.5px; color:var(--muted); margin-top:4px; }
 table { width:100%; border-collapse:collapse; font-size:13px; }
 th { text-align:left; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); padding:8px 12px; border-bottom:1px solid var(--line); }
-td { padding:10px 12px; border-bottom:1px solid var(--line); }
-.badge { display:inline-block; padding:3px 10px; border-radius:99px; font-size:11.5px; font-weight:600; }
+td { padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+.badge { display:inline-block; padding:3px 10px; border-radius:99px; font-size:11.5px; font-weight:600; white-space:nowrap; }
 .b-ok { background:var(--okbg); color:var(--ok); } .b-mod { background:var(--warnbg); color:var(--warn); }
 .b-new { background:var(--newbg); color:var(--new); } .b-bad { background:var(--badbg); color:var(--bad); }
 .conflict { padding:14px 18px; border-radius:var(--radius); margin-top:12px; display:flex; align-items:center; gap:14px; font-size:13px; background:var(--badbg); border:1px solid var(--bad); }
 .conflict .acts { margin-left:auto; display:flex; gap:8px; }
 .conflict .acts .btn { padding:6px 12px; font-size:12px; }
-.conflict .acts .btn.warn { background:var(--bad); }
-pre { margin-top:18px; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:14px; font-size:12px; line-height:1.7; overflow:auto; max-height:220px; white-space:pre-wrap; }
+pre, .logline { font-family:ui-monospace,'SF Mono',monospace; }
+pre { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:14px; font-size:12px; line-height:1.7; overflow:auto; max-height:260px; white-space:pre-wrap; }
+.hist { font-size:12px; line-height:2; color:var(--sub); }
+.hist .err { color:var(--bad); } .hist .warn { color:var(--warn); }
+input, select { background:var(--panel); border:1px solid var(--line); color:var(--fg); border-radius:8px; padding:8px 12px; font-size:13px; }
+input:focus { outline:2px solid var(--accent1); border-color:transparent; }
+.search { width:260px; }
+.setrow { display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid var(--line); font-size:13.5px; }
+.setrow .lbl { width:140px; color:var(--sub); }
+.setrow .val { color:var(--muted); font-size:12.5px; }
+.pcard { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px; margin-bottom:12px; }
+.pcard h3 { font-size:13.5px; margin-bottom:8px; }
+.pcard pre { max-height:180px; }
 .hidden { display:none; }
+.page { display:none; } .page.on { display:block; }
 </style>
 </head>
 <body>
@@ -66,33 +81,56 @@ pre { margin-top:18px; background:var(--panel); border:1px solid var(--line); bo
   <div class="side">
     <div class="logo"><span class="dot">S</span>skillsync</div>
     <div class="nav">
-      <a class="on" href="#">▣ 总览</a>
-      <a href="#" id="navSkills">⚙ Skills</a>
-      <a href="#" id="navPending">⚠ 待对账</a>
-      <a href="#" id="navLog">⇅ 同步日志</a>
+      <a class="on" data-p="overview">▣ 总览</a>
+      <a data-p="skills">⚙ Skills</a>
+      <a data-p="pending">⚠ 待对账<span class="cnt hidden" id="pendCnt"></span></a>
+      <a data-p="log">⇅ 同步日志</a>
+      <a data-p="settings">⚙ 设置</a>
     </div>
     <div class="foot" id="foot">加载中…</div>
   </div>
   <div class="main">
     <div class="top">
-      <h1>总览</h1>
+      <h1 id="pageTitle">总览</h1>
       <button class="btn" id="syncBtn">立即同步</button>
       <button class="theme" id="themeBtn" title="切换主题">☾</button>
       <span class="last" id="remote"></span>
     </div>
     <div class="banner ok" id="banner">加载中…</div>
-    <div class="cards">
-      <div class="card"><div class="k">变更 SKILLS</div><div class="v" id="cRows">–</div><div class="s">本次对账涉及</div></div>
-      <div class="card"><div class="k">落后 / 超前</div><div class="v" id="cAB">–</div><div class="s">与远端差距</div></div>
-      <div class="card"><div class="k">待处理</div><div class="v" id="cPend">–</div><div class="s">需人工决策</div></div>
-      <div class="card"><div class="k">定时同步</div><div class="v" id="cInt">–</div><div class="s">分钟一次</div></div>
+
+    <div class="page on" id="p-overview">
+      <div class="cards">
+        <div class="card"><div class="k">变更 SKILLS</div><div class="v hl" id="cRows">–</div><div class="s">本次对账涉及</div></div>
+        <div class="card"><div class="k">落后 / 超前</div><div class="v hl" id="cAB">–</div><div class="s">与远端差距</div></div>
+        <div class="card"><div class="k">待处理</div><div class="v hl" id="cPend">–</div><div class="s">需人工决策</div></div>
+        <div class="card"><div class="k">上次同步</div><div class="v" id="cLast" style="font-size:16px">–</div><div class="s" id="cLastS">每 <span id="cInt">–</span> 分钟自动一次</div></div>
+      </div>
+      <div id="conflicts"></div>
+      <pre id="synclog" class="hidden"></pre>
     </div>
-    <div id="conflicts"></div>
-    <table>
-      <thead><tr><th>Skill</th><th>状态</th><th>本地</th><th>远端</th></tr></thead>
-      <tbody id="rows"></tbody>
-    </table>
-    <pre id="log" class="hidden"></pre>
+
+    <div class="page" id="p-skills">
+      <input class="search" id="skillSearch" placeholder="搜索 skill…">
+      <table style="margin-top:14px">
+        <thead><tr><th>Skill</th><th>描述</th><th>最后修改</th></tr></thead>
+        <tbody id="skillRows"><tr><td colspan="3" style="color:var(--muted)">加载中…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="page" id="p-pending">
+      <div id="pendConflicts"></div>
+      <div id="pendFiles" style="margin-top:14px"></div>
+    </div>
+
+    <div class="page" id="p-log"><div class="hist" id="hist">加载中…</div></div>
+
+    <div class="page" id="p-settings">
+      <div class="setrow"><span class="lbl">仓库</span><span class="val" id="sRepo">–</span></div>
+      <div class="setrow"><span class="lbl">分支</span><span class="val" id="sBranch">–</span></div>
+      <div class="setrow"><span class="lbl">同步间隔(分钟)</span><input id="sInterval" type="number" min="1" style="width:90px"><button class="btn ghost" id="sSave">保存</button></div>
+      <div class="setrow"><span class="lbl">开机自动同步</span><button class="btn ghost" id="sLaunch">–</button><span class="val">launchd 定时任务</span></div>
+      <div class="setrow"><span class="lbl">主题</span><button class="btn ghost" id="sTheme">切换深/浅</button></div>
+    </div>
   </div>
 </div>
 <script>
@@ -102,51 +140,152 @@ const KIND = {
   'both-modified':['双边修改','b-bad'], 'deleted-one-side':['单边删除','b-bad'],
 };
 const $ = id => document.getElementById(id);
+let STATUS = null, SKILLS = null;
+
 function setTheme(t){ document.documentElement.dataset.theme=t; localStorage.setItem('ss-theme',t); $('themeBtn').textContent = t==='dark'?'☀':'☾'; }
 $('themeBtn').onclick = () => setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
+$('sTheme').onclick = $('themeBtn').onclick;
 setTheme(localStorage.getItem('ss-theme')||'dark');
 
+document.querySelectorAll('.nav a').forEach(a => a.onclick = () => {
+  document.querySelectorAll('.nav a').forEach(x=>x.classList.remove('on'));
+  a.classList.add('on');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  $('p-'+a.dataset.p).classList.add('on');
+  $('pageTitle').textContent = a.textContent.replace(/\d+$/,'');
+  if(a.dataset.p==='skills' && !SKILLS) loadSkills();
+  if(a.dataset.p==='pending') loadPending();
+  if(a.dataset.p==='log') loadHistory();
+  if(a.dataset.p==='settings') loadSettings();
+});
+
+async function j(url, opts){
+  const r = await fetch(url, opts);
+  if(!r.ok) throw new Error(url + ' → HTTP ' + r.status);
+  return r.json();
+}
+
+function showErr(msg){
+  $('banner').className = 'banner bad';
+  $('banner').textContent = '⚠ 数据加载失败：' + msg + '（服务是否已重启？）';
+}
+
 async function refresh(){
-  const d = await (await fetch('/api/status')).json();
-  const r = d.report;
+  try {
+    STATUS = await j('/api/status');
+  } catch(e){ showErr(e.message); return; }
+  const d = STATUS, r = d.report, rows = r.rows || [];
   $('foot').innerHTML = `本机 ${d.machine}<br>定时同步 · 每 ${d.interval} 分钟<br>${d.skillsDir}`;
   $('remote').textContent = d.repo + ' · ' + d.branch;
-  const manual = r.rows.filter(x=>x.kind==='both-modified'||x.kind==='deleted-one-side');
+  const manual = rows.filter(x=>x.kind==='both-modified'||x.kind==='deleted-one-side');
+  const pendN = manual.length + (d.pending?.length||0);
   const clean = r.ahead===0 && r.behind===0 && manual.length===0 && !r.nameClash?.length;
   $('banner').className = 'banner ' + (clean?'ok':'bad');
   $('banner').textContent = clean ? '✓ 与远端同步一致 · 落后 0 / 超前 0'
     : `⚠ 落后 ${r.behind} / 超前 ${r.ahead} · ${manual.length} 个需决策${r.nameClash?.length?' · '+r.nameClash.length+' 个同名冲突':''}`;
-  $('cRows').textContent = r.rows.length;
+  $('cRows').textContent = rows.length;
   $('cAB').textContent = r.behind + ' / ' + r.ahead;
-  $('cPend').textContent = manual.length + (d.pending?.length||0);
+  $('cPend').textContent = pendN;
   $('cInt').textContent = d.interval;
-  $('conflicts').innerHTML = manual.map(x=>`
+  if(d.lastSync){
+    const t = new Date(d.lastSync.time);
+    $('cLast').textContent = t.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+    $('cLastS').textContent = t.toLocaleDateString('zh-CN') + ' · 结果 ' + (d.lastSync.code===0?'成功':d.lastSync.code===2?'需对账':'失败');
+  }
+  const cnt = $('pendCnt');
+  cnt.classList.toggle('hidden', pendN===0); cnt.textContent = pendN;
+  const strip = manual.map(x=>`
     <div class="conflict"><span class="badge b-bad">${KIND[x.kind][0]}</span>
     <span><b>${x.skill}</b> — ${x.kind==='both-modified'?'两台机器都改了，需要你选边':'一边删除、一边保留'}</span>
     <span class="acts"><button class="btn ghost" onclick="resolve('${x.skill}','local')">保留本地</button>
     <button class="btn warn" onclick="resolve('${x.skill}','remote')">保留远端</button></span></div>`).join('');
-  $('rows').innerHTML = r.rows.map(x=>{
-    const k = KIND[x.kind]||['?','b-ok'];
-    return `<tr><td>${x.skill}</td><td><span class="badge ${k[1]}">${k[0]}</span></td><td>${(x.local||[]).join(',')||'–'}</td><td>${(x.remote||[]).join(',')||'–'}</td></tr>`;
-  }).join('') || '<tr><td colspan="4" style="color:var(--muted)">没有差异，一切同步</td></tr>';
+  $('conflicts').innerHTML = strip;
+  $('pendConflicts').innerHTML = strip || '<div style="color:var(--muted);font-size:13px">没有需要选边的冲突</div>';
 }
+
 async function doSync(){
   $('syncBtn').disabled = true; $('syncBtn').textContent = '同步中…';
-  const r = await (await fetch('/api/sync',{method:'POST'})).json();
-  $('log').classList.remove('hidden');
-  $('log').textContent = (r.log||[]).join('\n') + `\n[exit ${r.code}]`;
+  const el = $('synclog'); el.classList.remove('hidden'); el.textContent = '';
+  try {
+    const res = await fetch('/api/sync-stream',{method:'POST'});
+    const rd = res.body.getReader(), dec = new TextDecoder();
+    let buf = '';
+    while(true){
+      const {done,value} = await rd.read(); if(done) break;
+      buf += dec.decode(value,{stream:true});
+      let i;
+      while((i=buf.indexOf('\n\n'))>=0){
+        const line = buf.slice(0,i).replace(/^data: /,''); buf = buf.slice(i+2);
+        el.textContent += line + '\n'; el.scrollTop = el.scrollHeight;
+      }
+    }
+  } catch(e){ el.textContent += '\n同步请求失败: ' + e.message; }
   $('syncBtn').disabled = false; $('syncBtn').textContent = '立即同步';
   refresh();
 }
+
 async function resolve(skill, side){
   if(!confirm(`${skill}：保留${side==='local'?'本地':'远端'}版本？`)) return;
-  const r = await (await fetch('/api/resolve',{method:'POST',body:JSON.stringify({skill,side})})).json();
-  $('log').classList.remove('hidden');
-  $('log').textContent = (r.log||[]).join('\n') + `\n[exit ${r.code}]`;
+  const r = await j('/api/resolve',{method:'POST',body:JSON.stringify({skill,side})});
+  const el = $('synclog'); el.classList.remove('hidden');
+  el.textContent = (r.log||[]).join('\n') + `\n[exit ${r.code}]`;
   refresh();
 }
+
+async function loadSkills(){
+  try { SKILLS = await j('/api/skills'); } catch(e){ showErr(e.message); return; }
+  renderSkills();
+}
+function renderSkills(){
+  const q = $('skillSearch').value.toLowerCase();
+  const list = (SKILLS||[]).filter(x=>!q || x.name.toLowerCase().includes(q) || (x.desc||'').toLowerCase().includes(q));
+  $('skillRows').innerHTML = list.map(x=>`<tr><td><b>${x.name}</b></td><td style="color:var(--sub)">${x.desc||'–'}</td><td style="color:var(--muted)">${x.updated||'–'}</td></tr>`).join('')
+    || '<tr><td colspan="3" style="color:var(--muted)">无匹配</td></tr>';
+}
+$('skillSearch').oninput = renderSkills;
+
+async function loadPending(){
+  try {
+    const list = await j('/api/pending');
+    $('pendFiles').innerHTML = list.map(p=>`<div class="pcard"><h3>📄 ${p.name}</h3><pre>${p.text.replace(/</g,'&lt;')}</pre></div>`).join('')
+      || '<div style="color:var(--muted);font-size:13px">没有待对账报告</div>';
+  } catch(e){ showErr(e.message); }
+}
+
+async function loadHistory(){
+  try {
+    const list = await j('/api/history');
+    $('hist').innerHTML = list.map(l=>{
+      const cls = /FAIL|failed|error/i.test(l)?'err':/needs|conflict|decision/i.test(l)?'warn':'';
+      return `<div class="${cls}">${l.replace(/</g,'&lt;')}</div>`;
+    }).join('') || '暂无日志';
+  } catch(e){ showErr(e.message); }
+}
+
+async function loadSettings(){
+  try {
+    const s = await j('/api/settings');
+    $('sRepo').textContent = s.repo; $('sBranch').textContent = s.branch;
+    $('sInterval').value = s.interval;
+    $('sLaunch').textContent = s.launch ? '已开启 · 点击关闭' : '未开启 · 点击安装';
+    $('sLaunch').dataset.on = s.launch ? '1' : '0';
+  } catch(e){ showErr(e.message); }
+}
+$('sSave').onclick = async () => {
+  await j('/api/settings',{method:'PUT',body:JSON.stringify({interval:+$('sInterval').value})});
+  $('sSave').textContent = '已保存'; setTimeout(()=>$('sSave').textContent='保存',1500);
+  refresh();
+};
+$('sLaunch').onclick = async () => {
+  const on = $('sLaunch').dataset.on==='1';
+  const r = await j('/api/launch',{method:'POST',body:JSON.stringify({action:on?'uninstall':'install'})});
+  $('sLaunch').dataset.on = r.installed?'1':'0';
+  $('sLaunch').textContent = r.installed?'已开启 · 点击关闭':'未开启 · 点击安装';
+};
+
 $('syncBtn').onclick = doSync;
 refresh();
+setInterval(refresh, 30000);
 </script>
 </body>
 </html>
