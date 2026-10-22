@@ -32,7 +32,7 @@ type Server struct {
 	mu  sync.Mutex
 }
 
-func Serve(cfg *config.Config, port string) error {
+func Serve(cfg *config.Config, port string, noBrowser bool) error {
 	s := &Server{cfg: cfg}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -45,7 +45,9 @@ func Serve(cfg *config.Config, port string) error {
 	host := "127.0.0.1:" + port
 	url := "http://" + host
 	fmt.Println("skillsync ui →", url)
-	openBrowser(url)
+	if !noBrowser {
+		openBrowser(url)
+	}
 	return http.ListenAndServe(host, mux)
 }
 

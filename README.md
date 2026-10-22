@@ -29,6 +29,7 @@ Grab a binary from [Releases](../../releases):
 | Windows | `skillsync-windows-amd64.exe` |
 | Linux | `skillsync-linux-amd64` |
 | Menu-bar app (macOS / Windows) | `skillsync-tray-*` |
+| Window app with dashboard (macOS) | `Skillsync-darwin-gui.app.zip` |
 
 Or build: `go build ./cmd/skillsync`.
 

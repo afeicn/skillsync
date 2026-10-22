@@ -48,8 +48,19 @@ jobs:
         run: GOOS=windows GOARCH=amd64 go build -ldflags "-s -w -X main.version=${GITHUB_REF_NAME}" -o dist/skillsync-tray-windows-amd64.exe ./cmd/skillsync-tray
       - uses: actions/upload-artifact@v4
         with: {name: tray-windows, path: dist/skillsync-tray-windows-amd64.exe}
+  app-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: {go-version: "1.24"}
+      - run: |
+          VERSION=${GITHUB_REF_NAME} ./scripts/build-macos-app.sh
+          ditto -c -k --keepParent dist/Skillsync.app dist/Skillsync-darwin-gui.app.zip
+      - uses: actions/upload-artifact@v4
+        with: {name: app-macos, path: dist/Skillsync-darwin-gui.app.zip}
   release:
-    needs: [cli, tray-macos, tray-windows]
+    needs: [cli, tray-macos, tray-windows, app-macos]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
