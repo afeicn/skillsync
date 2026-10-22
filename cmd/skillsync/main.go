@@ -11,6 +11,7 @@ import (
 	"github.com/afeicn/skillsync/internal/config"
 	"github.com/afeicn/skillsync/internal/gitx"
 	"github.com/afeicn/skillsync/internal/recon"
+	"github.com/afeicn/skillsync/internal/ui"
 )
 
 var version = "dev"
@@ -25,6 +26,7 @@ Usage:
   skillsync verify
   skillsync link                           # symlink skills into detected tool dirs
   skillsync watch                          # run sync on an interval
+  skillsync ui      [--port 7788]          # local web dashboard
   skillsync version
 `
 
@@ -79,6 +81,15 @@ func main() {
 		for {
 			recon.Auto(cfg)
 			time.Sleep(time.Duration(cfg.Interval) * time.Minute)
+		}
+	case "ui":
+		fs := flag.NewFlagSet("ui", flag.ExitOnError)
+		cfgPath := fs.String("config", "", "")
+		port := fs.String("port", "7788", "")
+		_ = fs.Parse(args[1:])
+		if err := ui.Serve(loadCfgPath(*cfgPath), *port); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
 		}
 	case "version":
 		fmt.Println(version)

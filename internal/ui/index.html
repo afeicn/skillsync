@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>skillsync</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root[data-theme=dark] {
+  --bg:#0A0A0F; --fg:#F2F3F7; --side:rgba(255,255,255,.03); --line:rgba(255,255,255,.08);
+  --panel:rgba(255,255,255,.045); --muted:#8B8E9C; --sub:#A7AAB8;
+  --accent1:#7C3AED; --accent2:#22D3EE; --grad:linear-gradient(135deg,#7C3AED,#22D3EE);
+  --ok:#6EE7B7; --okbg:rgba(52,211,153,.12); --warn:#FCD34D; --warnbg:rgba(251,191,36,.14);
+  --new:#C4B5FD; --newbg:rgba(124,58,237,.25); --bad:#F43F5E; --badbg:rgba(244,63,94,.1);
+  --appbg:radial-gradient(700px 400px at 85% -10%, rgba(124,58,237,.28), transparent 60%), radial-gradient(600px 400px at -10% 110%, rgba(34,211,238,.18), transparent 60%);
+  --radius:18px;
+}
+:root[data-theme=light] {
+  --bg:#F7F9FC; --fg:#1A1F36; --side:#FFFFFF; --line:#E7EAf2;
+  --panel:#FFFFFF; --muted:#8792A2; --sub:#5E6C84;
+  --accent1:#635BFF; --accent2:#635BFF; --grad:linear-gradient(135deg,#635BFF,#635BFF);
+  --ok:#12784A; --okbg:#E3F9EE; --warn:#9A6700; --warnbg:#FDF3E1;
+  --new:#3A32C9; --newbg:#EEF0FF; --bad:#D64545; --badbg:#FDF0F0;
+  --appbg:var(--bg); --radius:12px;
+}
+body { font-family:-apple-system,'PingFang SC','Inter',sans-serif; background:var(--bg); color:var(--fg); min-height:100vh; }
+.app { display:grid; grid-template-columns:230px 1fr; min-height:100vh; background:var(--appbg); }
+.side { display:flex; flex-direction:column; padding:20px 14px; background:var(--side); border-right:1px solid var(--line); }
+.logo { display:flex; align-items:center; gap:10px; font-weight:700; font-size:16px; padding:6px 10px 22px; }
+.logo .dot { width:26px; height:26px; border-radius:8px; background:var(--grad); display:inline-flex; align-items:center; justify-content:center; color:#fff; font-size:13px; }
+.nav a { display:flex; gap:10px; align-items:center; padding:9px 12px; border-radius:8px; font-size:13.5px; text-decoration:none; color:var(--sub); margin-bottom:2px; }
+.nav a.on { background:var(--newbg); color:var(--new); font-weight:600; }
+.foot { margin-top:auto; font-size:12px; padding:10px; border-radius:8px; background:var(--panel); color:var(--muted); border:1px solid var(--line); line-height:1.7; }
+.main { padding:26px 34px; overflow:hidden; }
+.top { display:flex; align-items:center; gap:14px; margin-bottom:22px; }
+.top h1 { font-size:20px; font-weight:700; }
+.btn { padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; border:none; background:var(--grad); color:#fff; cursor:pointer; }
+.btn.ghost { background:var(--panel); color:var(--fg); border:1px solid var(--line); }
+.theme { width:34px; height:34px; border-radius:8px; background:var(--panel); border:1px solid var(--line); cursor:pointer; font-size:15px; }
+.last { font-size:12.5px; margin-left:auto; color:var(--muted); }
+.banner { padding:13px 18px; border-radius:10px; font-size:13px; margin-bottom:18px; display:flex; gap:10px; align-items:center; }
+.banner.ok { background:var(--okbg); border:1px solid var(--ok); color:var(--ok); }
+.banner.bad { background:var(--badbg); border:1px solid var(--bad); color:var(--bad); }
+.cards { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:18px; }
+.card { padding:16px 18px; border-radius:var(--radius); background:var(--panel); border:1px solid var(--line); }
+.card .k { font-size:12px; color:var(--muted); margin-bottom:6px; }
+.card .v { font-size:28px; font-weight:700; }
+:root[data-theme=dark] .card .v { background:linear-gradient(135deg,#C4B5FD,#67E8F9); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.card .s { font-size:11.5px; color:var(--muted); margin-top:4px; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th { text-align:left; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); padding:8px 12px; border-bottom:1px solid var(--line); }
+td { padding:10px 12px; border-bottom:1px solid var(--line); }
+.badge { display:inline-block; padding:3px 10px; border-radius:99px; font-size:11.5px; font-weight:600; }
+.b-ok { background:var(--okbg); color:var(--ok); } .b-mod { background:var(--warnbg); color:var(--warn); }
+.b-new { background:var(--newbg); color:var(--new); } .b-bad { background:var(--badbg); color:var(--bad); }
+.conflict { padding:14px 18px; border-radius:var(--radius); margin-top:12px; display:flex; align-items:center; gap:14px; font-size:13px; background:var(--badbg); border:1px solid var(--bad); }
+.conflict .acts { margin-left:auto; display:flex; gap:8px; }
+.conflict .acts .btn { padding:6px 12px; font-size:12px; }
+.conflict .acts .btn.warn { background:var(--bad); }
+pre { margin-top:18px; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:14px; font-size:12px; line-height:1.7; overflow:auto; max-height:220px; white-space:pre-wrap; }
+.hidden { display:none; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="side">
+    <div class="logo"><span class="dot">S</span>skillsync</div>
+    <div class="nav">
+      <a class="on" href="#">▣ 总览</a>
+      <a href="#" id="navSkills">⚙ Skills</a>
+      <a href="#" id="navPending">⚠ 待对账</a>
+      <a href="#" id="navLog">⇅ 同步日志</a>
+    </div>
+    <div class="foot" id="foot">加载中…</div>
+  </div>
+  <div class="main">
+    <div class="top">
+      <h1>总览</h1>
+      <button class="btn" id="syncBtn">立即同步</button>
+      <button class="theme" id="themeBtn" title="切换主题">☾</button>
+      <span class="last" id="remote"></span>
+    </div>
+    <div class="banner ok" id="banner">加载中…</div>
+    <div class="cards">
+      <div class="card"><div class="k">变更 SKILLS</div><div class="v" id="cRows">–</div><div class="s">本次对账涉及</div></div>
+      <div class="card"><div class="k">落后 / 超前</div><div class="v" id="cAB">–</div><div class="s">与远端差距</div></div>
+      <div class="card"><div class="k">待处理</div><div class="v" id="cPend">–</div><div class="s">需人工决策</div></div>
+      <div class="card"><div class="k">定时同步</div><div class="v" id="cInt">–</div><div class="s">分钟一次</div></div>
+    </div>
+    <div id="conflicts"></div>
+    <table>
+      <thead><tr><th>Skill</th><th>状态</th><th>本地</th><th>远端</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <pre id="log" class="hidden"></pre>
+  </div>
+</div>
+<script>
+const KIND = {
+  'local-only':['待推送','b-new'], 'remote-only':['将接收','b-new'],
+  'local-modified':['本地已改','b-mod'], 'remote-modified':['将接受','b-ok'],
+  'both-modified':['双边修改','b-bad'], 'deleted-one-side':['单边删除','b-bad'],
+};
+const $ = id => document.getElementById(id);
+function setTheme(t){ document.documentElement.dataset.theme=t; localStorage.setItem('ss-theme',t); $('themeBtn').textContent = t==='dark'?'☀':'☾'; }
+$('themeBtn').onclick = () => setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
+setTheme(localStorage.getItem('ss-theme')||'dark');
+
+async function refresh(){
+  const d = await (await fetch('/api/status')).json();
+  const r = d.report;
+  $('foot').innerHTML = `本机 ${d.machine}<br>定时同步 · 每 ${d.interval} 分钟<br>${d.skillsDir}`;
+  $('remote').textContent = d.repo + ' · ' + d.branch;
+  const manual = r.rows.filter(x=>x.kind==='both-modified'||x.kind==='deleted-one-side');
+  const clean = r.ahead===0 && r.behind===0 && manual.length===0 && !r.nameClash?.length;
+  $('banner').className = 'banner ' + (clean?'ok':'bad');
+  $('banner').textContent = clean ? '✓ 与远端同步一致 · 落后 0 / 超前 0'
+    : `⚠ 落后 ${r.behind} / 超前 ${r.ahead} · ${manual.length} 个需决策${r.nameClash?.length?' · '+r.nameClash.length+' 个同名冲突':''}`;
+  $('cRows').textContent = r.rows.length;
+  $('cAB').textContent = r.behind + ' / ' + r.ahead;
+  $('cPend').textContent = manual.length + (d.pending?.length||0);
+  $('cInt').textContent = d.interval;
+  $('conflicts').innerHTML = manual.map(x=>`
+    <div class="conflict"><span class="badge b-bad">${KIND[x.kind][0]}</span>
+    <span><b>${x.skill}</b> — ${x.kind==='both-modified'?'两台机器都改了，需要你选边':'一边删除、一边保留'}</span>
+    <span class="acts"><button class="btn ghost" onclick="resolve('${x.skill}','local')">保留本地</button>
+    <button class="btn warn" onclick="resolve('${x.skill}','remote')">保留远端</button></span></div>`).join('');
+  $('rows').innerHTML = r.rows.map(x=>{
+    const k = KIND[x.kind]||['?','b-ok'];
+    return `<tr><td>${x.skill}</td><td><span class="badge ${k[1]}">${k[0]}</span></td><td>${(x.local||[]).join(',')||'–'}</td><td>${(x.remote||[]).join(',')||'–'}</td></tr>`;
+  }).join('') || '<tr><td colspan="4" style="color:var(--muted)">没有差异，一切同步</td></tr>';
+}
+async function doSync(){
+  $('syncBtn').disabled = true; $('syncBtn').textContent = '同步中…';
+  const r = await (await fetch('/api/sync',{method:'POST'})).json();
+  $('log').classList.remove('hidden');
+  $('log').textContent = (r.log||[]).join('\n') + `\n[exit ${r.code}]`;
+  $('syncBtn').disabled = false; $('syncBtn').textContent = '立即同步';
+  refresh();
+}
+async function resolve(skill, side){
+  if(!confirm(`${skill}：保留${side==='local'?'本地':'远端'}版本？`)) return;
+  const r = await (await fetch('/api/resolve',{method:'POST',body:JSON.stringify({skill,side})})).json();
+  $('log').classList.remove('hidden');
+  $('log').textContent = (r.log||[]).join('\n') + `\n[exit ${r.code}]`;
+  refresh();
+}
+$('syncBtn').onclick = doSync;
+refresh();
+</script>
+</body>
+</html>

@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -37,25 +38,27 @@ const (
 )
 
 type Row struct {
-	Skill  string
-	Kind   string
-	Local  []string
-	Remote []string
+	Skill  string   `json:"skill"`
+	Kind   string   `json:"kind"`
+	Local  []string `json:"local"`
+	Remote []string `json:"remote"`
 }
 
 type Issue struct {
-	Path  string
-	Level string
-	Why   string
+	Path  string `json:"path"`
+	Level string `json:"level"`
+	Why   string `json:"why"`
 }
 
 type Report struct {
-	Head, Base  string
-	Ahead, Behind int
-	Rows        []Row
-	NameClash   []string
-	RenameHints [][2]string
-	Hygiene     []Issue
+	Head        string   `json:"head"`
+	Base        string   `json:"base"`
+	Ahead       int      `json:"ahead"`
+	Behind      int      `json:"behind"`
+	Rows        []Row    `json:"rows"`
+	NameClash   []string `json:"nameClash"`
+	RenameHints [][2]string `json:"renameHints"`
+	Hygiene     []Issue  `json:"hygiene"`
 }
 
 func topName(p string) string {
@@ -418,6 +421,10 @@ func writePending(cfg *config.Config, r *Report, reason string) string {
 
 func logLine(msg string) {
 	line := time.Now().Format("2006-01-02 15:04:05") + " " + msg
+	if logf != nil {
+		logf(line)
+		return
+	}
 	fmt.Println(line)
 	if f, err := os.OpenFile(filepath.Join(config.StateDir(), "skillsync.log"),
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644); err == nil {
@@ -425,6 +432,11 @@ func logLine(msg string) {
 		f.Close()
 	}
 }
+
+var logf func(string)
+
+// SetLog redirects sync log lines (used by the UI).
+func SetLog(fn func(string)) { logf = fn }
 
 func PreSync(cfg *config.Config) (string, bool) { return preSyncCheck(cfg) }
 
@@ -559,6 +571,8 @@ func Auto(cfg *config.Config) int {
 	return 0
 }
 
+func HasFail(issues []Issue) bool { return hasFail(issues) }
+
 func hasFail(issues []Issue) bool {
 	for _, i := range issues {
 		if i.Level == "fail" {
@@ -569,11 +583,15 @@ func hasFail(issues []Issue) bool {
 }
 
 func Resolve(cfg *config.Config, keepLocal, keepRemote []string) int {
+	return ResolveW(cfg, keepLocal, keepRemote, os.Stdout)
+}
+
+func ResolveW(cfg *config.Config, keepLocal, keepRemote []string, w io.Writer) int {
 	g := gitx.Repo{Dir: cfg.SkillsDir}
 	lset, rset := toSet(keepLocal), toSet(keepRemote)
 	for s := range lset {
 		if rset[s] {
-			fmt.Printf("skill %q cannot be kept on both sides\n", s)
+			fmt.Fprintf(w, "skill %q cannot be kept on both sides\n", s)
 			return 1
 		}
 	}
@@ -584,23 +602,23 @@ func Resolve(cfg *config.Config, keepLocal, keepRemote []string) int {
 		case lset[s]:
 			_, _ = g.Run("checkout", "--ours", "--", x)
 			_, _ = g.Run("add", "--", x)
-			fmt.Println("keep local:", x)
+			fmt.Fprintln(w, "keep local:", x)
 		case rset[s]:
 			_, _ = g.Run("checkout", "--theirs", "--", x)
 			_, _ = g.Run("add", "--", x)
-			fmt.Println("keep remote:", x)
+			fmt.Fprintln(w, "keep remote:", x)
 		default:
 			rest = append(rest, x)
 		}
 	}
 	if len(rest) > 0 {
-		fmt.Println("still needs manual merge:")
+		fmt.Fprintln(w, "still needs manual merge:")
 		for _, x := range rest {
-			fmt.Println(" -", x)
+			fmt.Fprintln(w, " -", x)
 		}
 		return 2
 	}
-	fmt.Println("conflicts cleared; run verify then commit & push")
+	fmt.Fprintln(w, "conflicts cleared; run verify then commit & push")
 	return 0
 }
 
