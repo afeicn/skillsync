@@ -21,7 +21,9 @@ jobs:
       - env: {CGO_ENABLED: "0"}
         run: GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -ldflags "-s -w -X main.version=${GITHUB_REF_NAME}" -o dist/${{ matrix.out }} ./cmd/skillsync
       - uses: actions/upload-artifact@v4
-        with: {name: cli-${{ matrix.out }}, path: dist/${{ matrix.out }}}
+        with:
+          name: cli-${{ matrix.out }}
+          path: dist/${{ matrix.out }}
   tray-macos:
     runs-on: macos-latest
     steps:
