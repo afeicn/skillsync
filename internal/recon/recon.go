@@ -5,8 +5,10 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 
@@ -424,6 +426,41 @@ func logLine(msg string) {
 	}
 }
 
+func PreSync(cfg *config.Config) (string, bool) { return preSyncCheck(cfg) }
+
+// preSyncCheck runs the repo's pre-sync gate (PII check etc).
+// Config pre_sync_cmd wins; otherwise auto-detects scripts/pii-check.{sh,py}.
+func preSyncCheck(cfg *config.Config) (string, bool) {
+	cmdline := cfg.PreSyncCmd
+	if cmdline == "" {
+		for _, cand := range []string{"scripts/pii-check.sh", "scripts/pii_check.py", "scripts/pii-check.py"} {
+			if fileExists(filepath.Join(cfg.SkillsDir, cand)) {
+				cmdline = cand
+				break
+			}
+		}
+	}
+	if cmdline == "" {
+		return "", true
+	}
+	var cmd *exec.Cmd
+	switch {
+	case strings.HasSuffix(cmdline, ".sh"):
+		cmd = exec.Command("sh", cmdline)
+	case strings.HasSuffix(cmdline, ".py"):
+		cmd = exec.Command("python3", cmdline)
+	default:
+		shell := "/bin/sh"
+		if runtime.GOOS == "windows" {
+			shell = "cmd"
+		}
+		cmd = exec.Command(shell, cmdline)
+	}
+	cmd.Dir = cfg.SkillsDir
+	out, err := cmd.CombinedOutput()
+	return strings.TrimSpace(string(out)), err == nil
+}
+
 // Auto: snapshot local, reconcile, merge safe changes, push. Returns exit code.
 func Auto(cfg *config.Config) int {
 	g := gitx.Repo{Dir: cfg.SkillsDir}
@@ -458,6 +495,12 @@ func Auto(cfg *config.Config) int {
 			return 1
 		}
 		logLine("auto: local changes snapshotted")
+		if out, ok := preSyncCheck(cfg); !ok {
+			p := writePending(cfg, &Report{}, "pre-sync gate failed after snapshot")
+			logLine("auto: pre-sync gate FAILED, not pushing. Output:\n" + out + "\nReport: " + p)
+			notify.Send("skillsync", "pre-sync check failed, push blocked")
+			return 1
+		}
 	}
 
 	rep, err := Collect(cfg)
@@ -489,6 +532,15 @@ func Auto(cfg *config.Config) int {
 		}
 		logLine("auto: merged tree failed verify, rolled back")
 		notify.Send("skillsync", "merge result failed checks")
+		return 1
+	}
+	if out, ok := preSyncCheck(cfg); !ok {
+		if g.HasMerge() {
+			g.MergeAbort()
+		}
+		p := writePending(cfg, rep, "pre-sync gate failed after merge")
+		logLine("auto: pre-sync gate FAILED after merge, rolled back. Output:\n" + out + "\nReport: " + p)
+		notify.Send("skillsync", "pre-sync check failed, merge rolled back")
 		return 1
 	}
 	if g.HasMerge() || !g.StagedClean() {

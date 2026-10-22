@@ -64,6 +64,11 @@ func main() {
 		for _, i := range issues {
 			fmt.Printf("[%s] %s: %s\n", i.Level, i.Path, i.Why)
 		}
+		if out, ok := recon.PreSync(loadCfg(args[1:])); !ok {
+			fmt.Println("[pre-sync] FAILED:\n" + out)
+		} else if out != "" {
+			fmt.Println("[pre-sync] passed:\n" + out)
+		}
 		if len(issues) == 0 {
 			fmt.Println("verify passed")
 		}

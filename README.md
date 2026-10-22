@@ -93,7 +93,16 @@ interval_minutes = 60
 targets = ["~/.claude/skills", "~/.codex/skills", "~/.config/opencode/skills"]
 ignore = ["node_modules", "__pycache__", ".DS_Store"]
 max_file_mb = 10
+# optional; auto-detected as scripts/pii-check.{sh,py} when empty
+pre_sync_cmd = ""
 ```
+
+## Pre-sync gate
+
+If the repo contains `scripts/pii-check.sh` (or `.py`), every `sync` runs it
+after snapshotting and after merging — **before any push**. A failing gate
+aborts the merge, blocks the push, writes a `pending-*.md` report and sends a
+notification. Override the command with `pre_sync_cmd`.
 
 ## Security
 
@@ -103,6 +112,8 @@ same gate before every push.
 
 ## Roadmap
 
+- [x] pre-sync gate (PII / custom checks) — v0.1.2
+- [ ] `skillsync ui` — local management dashboard
 - [ ] `skillsync vendor` — lockfile + reinstall for third-party skills
 - [ ] brew tap
 - [ ] team mode (shared repo, per-member branches)

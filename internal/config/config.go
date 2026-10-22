@@ -9,13 +9,14 @@ import (
 )
 
 type Config struct {
-	Repo      string   `toml:"repo"`
-	Branch    string   `toml:"branch"`
-	SkillsDir string   `toml:"skills_dir"`
-	Interval  int      `toml:"interval_minutes"`
-	Targets   []string `toml:"targets"`
-	Ignore    []string `toml:"ignore"`
-	MaxFileMB int      `toml:"max_file_mb"`
+	Repo       string   `toml:"repo"`
+	Branch     string   `toml:"branch"`
+	SkillsDir  string   `toml:"skills_dir"`
+	Interval   int      `toml:"interval_minutes"`
+	Targets    []string `toml:"targets"`
+	Ignore     []string `toml:"ignore"`
+	MaxFileMB  int      `toml:"max_file_mb"`
+	PreSyncCmd string   `toml:"pre_sync_cmd"`
 
 	dir string `toml:"-"`
 }
