@@ -1,0 +1,58 @@
+name: release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  cli:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - {goos: darwin,  goarch: arm64, out: skillsync-darwin-arm64}
+          - {goos: darwin,  goarch: amd64, out: skillsync-darwin-amd64}
+          - {goos: linux,   goarch: amd64, out: skillsync-linux-amd64}
+          - {goos: windows, goarch: amd64, out: skillsync-windows-amd64.exe}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: {go-version: "1.24"}
+      - env: {CGO_ENABLED: "0"}
+        run: GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -ldflags "-s -w -X main.version=${GITHUB_REF_NAME}" -o dist/${{ matrix.out }} ./cmd/skillsync
+      - uses: actions/upload-artifact@v4
+        with: {name: cli-${{ matrix.out }}, path: dist/${{ matrix.out }}}
+  tray-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: {go-version: "1.24"}
+      - run: |
+          go build -ldflags "-s -w -X main.version=${GITHUB_REF_NAME}" -o dist/tray/skillsync-tray ./cmd/skillsync-tray
+          mkdir -p "dist/Skillsync.app/Contents/MacOS"
+          cp dist/tray/skillsync-tray "dist/Skillsync.app/Contents/MacOS/skillsync-tray"
+          printf '%s' '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>CFBundleName</key><string>Skillsync</string><key>CFBundleExecutable</key><string>skillsync-tray</string><key>CFBundleIdentifier</key><string>cn.afeicn.skillsync.tray</string><key>LSUIElement</key><true/></dict></plist>' > "dist/Skillsync.app/Contents/Info.plist"
+          ditto -c -k --keepParent "dist/Skillsync.app" dist/Skillsync-darwin.app.zip
+      - uses: actions/upload-artifact@v4
+        with: {name: tray-macos, path: dist/Skillsync-darwin.app.zip}
+  tray-windows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: {go-version: "1.24"}
+      - env: {CGO_ENABLED: "0"}
+        run: GOOS=windows GOARCH=amd64 go build -ldflags "-s -w -X main.version=${GITHUB_REF_NAME}" -o dist/skillsync-tray-windows-amd64.exe ./cmd/skillsync-tray
+      - uses: actions/upload-artifact@v4
+        with: {name: tray-windows, path: dist/skillsync-tray-windows-amd64.exe}
+  release:
+    needs: [cli, tray-macos, tray-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: {path: dist, merge-multiple: true}
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
