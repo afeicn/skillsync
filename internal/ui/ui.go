@@ -41,6 +41,8 @@ func Serve(cfg *config.Config, port string, noBrowser bool) error {
 	mux.HandleFunc("/api/history", s.history)
 	mux.HandleFunc("/api/settings", s.settings)
 	mux.HandleFunc("/api/launch", s.launch)
+	mux.HandleFunc("/api/init", s.init)
+	mux.HandleFunc("/api/skill", s.skillDetail)
 
 	ln, err := net.Listen("tcp", "127.0.0.1:"+port)
 	if err != nil {
@@ -83,6 +85,10 @@ func (s *Server) index(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) status(w http.ResponseWriter, r *http.Request) {
+	if s.cfg == nil {
+		json.NewEncoder(w).Encode(map[string]any{"configured": false})
+		return
+	}
 	rep, err := recon.Collect(s.cfg)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
@@ -92,7 +98,8 @@ func (s *Server) status(w http.ResponseWriter, r *http.Request) {
 	pending, _ := filepath.Glob(config.StateDir() + "/pending-*.md")
 	last := recon.LastSync()
 	json.NewEncoder(w).Encode(map[string]any{
-		"machine":   host,
+		"configured": true,
+		"machine":    host,
 		"repo":      s.cfg.Repo,
 		"branch":    s.cfg.Branch,
 		"skillsDir": s.cfg.SkillsDir,
@@ -103,9 +110,16 @@ func (s *Server) status(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (s *Server) needCfg(w http.ResponseWriter) bool {
+	if s.cfg == nil {
+		http.Error(w, "not configured", 400)
+		return false
+	}
+	return true
+}
+
 func (s *Server) sync(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "POST only", 405)
+	if r.Method != http.MethodPost || !s.needCfg(w) {
 		return
 	}
 	s.mu.Lock()
@@ -118,8 +132,7 @@ func (s *Server) sync(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) syncStream(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "POST only", 405)
+	if r.Method != http.MethodPost || !s.needCfg(w) {
 		return
 	}
 	s.mu.Lock()
@@ -203,8 +216,11 @@ type skillInfo struct {
 }
 
 func (s *Server) skills(w http.ResponseWriter, r *http.Request) {
+	if !s.needCfg(w) {
+		return
+	}
 	g := gitx.Repo{Dir: s.cfg.SkillsDir}
-	out, err := g.Run("ls-tree", "--name-only", "HEAD")
+	out, err := g.Run("ls-tree", "-d", "--name-only", "HEAD")
 	if err != nil {
 		http.Error(w, out, 500)
 		return
@@ -289,6 +305,9 @@ func (s *Server) history(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) settings(w http.ResponseWriter, r *http.Request) {
+	if !s.needCfg(w) {
+		return
+	}
 	switch r.Method {
 	case http.MethodGet:
 		json.NewEncoder(w).Encode(map[string]any{
@@ -300,13 +319,28 @@ func (s *Server) settings(w http.ResponseWriter, r *http.Request) {
 		})
 	case http.MethodPut:
 		var req struct {
-			Interval int `json:"interval"`
+			Interval int    `json:"interval"`
+			Repo     string `json:"repo"`
+			Branch   string `json:"branch"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Interval < 1 {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "bad request", 400)
 			return
 		}
-		s.cfg.Interval = req.Interval
+		if req.Repo != "" && req.Repo != s.cfg.Repo {
+			g := gitx.Repo{Dir: s.cfg.SkillsDir}
+			if _, err := g.Run("ls-remote", req.Repo); err != nil {
+				http.Error(w, "仓库无法访问，请检查地址和权限", 400)
+				return
+			}
+			s.cfg.Repo = req.Repo
+		}
+		if req.Branch != "" {
+			s.cfg.Branch = req.Branch
+		}
+		if req.Interval >= 1 {
+			s.cfg.Interval = req.Interval
+		}
 		if err := s.cfg.Save(""); err != nil {
 			http.Error(w, err.Error(), 500)
 			return
@@ -325,8 +359,7 @@ func launchPath() string {
 func launchInstalled() bool { _, err := os.Stat(launchPath()); return err == nil }
 
 func (s *Server) launch(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "POST only", 405)
+	if r.Method != http.MethodPost || !s.needCfg(w) {
 		return
 	}
 	var req struct {
@@ -362,4 +395,88 @@ func (s *Server) launch(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "action required", 400)
 	}
+}
+
+func (s *Server) init(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "POST only", 405)
+		return
+	}
+	if s.cfg != nil {
+		http.Error(w, "already configured", 400)
+		return
+	}
+	var req struct {
+		Repo     string `json:"repo"`
+		Branch   string `json:"branch"`
+		Interval int    `json:"interval"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Repo == "" {
+		http.Error(w, "仓库地址不能为空", 400)
+		return
+	}
+	branch := req.Branch
+	if branch == "" {
+		branch = "main"
+	}
+	interval := req.Interval
+	if interval < 1 {
+		interval = 60
+	}
+	home, _ := os.UserHomeDir()
+	skillsDir := filepath.Join(home, ".skillsync", "skills")
+	if _, err := os.Stat(filepath.Join(skillsDir, ".git")); err != nil {
+		g := gitx.Repo{Dir: filepath.Dir(skillsDir)}
+		_ = os.MkdirAll(filepath.Dir(skillsDir), 0o755)
+		if out, err := g.Run("clone", req.Repo, skillsDir); err != nil {
+			http.Error(w, "克隆失败："+strings.TrimSpace(out), 400)
+			return
+		}
+	}
+	cfg := &config.Config{Repo: req.Repo, Branch: branch, SkillsDir: skillsDir,
+		Interval: interval, Targets: detectTargets()}
+	if err := cfg.Save(""); err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	s.cfg = cfg
+	json.NewEncoder(w).Encode(map[string]any{"ok": true, "skillsDir": skillsDir})
+}
+
+func detectTargets() []string {
+	home, _ := os.UserHomeDir()
+	cands := []string{
+		filepath.Join(home, ".claude", "skills"),
+		filepath.Join(home, ".codex", "skills"),
+		filepath.Join(home, ".config", "opencode", "skills"),
+		filepath.Join(home, ".cursor", "skills"),
+	}
+	var out []string
+	for _, c := range cands {
+		if st, err := os.Stat(filepath.Dir(c)); err == nil && st.IsDir() {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
+func (s *Server) skillDetail(w http.ResponseWriter, r *http.Request) {
+	if !s.needCfg(w) {
+		return
+	}
+	name := filepath.Base(r.URL.Query().Get("name"))
+	if name == "" || name == "." || name == ".." {
+		http.Error(w, "bad name", 400)
+		return
+	}
+	b, err := os.ReadFile(filepath.Join(s.cfg.SkillsDir, name, "SKILL.md"))
+	if err != nil {
+		http.Error(w, "SKILL.md not found", 404)
+		return
+	}
+	t := string(b)
+	if len(t) > 20000 {
+		t = t[:20000] + "\n…"
+	}
+	json.NewEncoder(w).Encode(map[string]any{"name": name, "content": t})
 }

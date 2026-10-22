@@ -88,7 +88,11 @@ func main() {
 		port := fs.String("port", "7788", "")
 		nobrowser := fs.Bool("no-browser", false, "")
 		_ = fs.Parse(args[1:])
-		if err := ui.Serve(loadCfgPath(*cfgPath), *port, *nobrowser); err != nil {
+		cfg, err := config.Load(*cfgPath)
+		if err != nil {
+			cfg = nil // no config yet: UI serves onboarding
+		}
+		if err := ui.Serve(cfg, *port, *nobrowser); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
